@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID-19 Data Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background: #333;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        nav {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        #map {
+            height: 600px;
+            margin-top: 20px;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 6px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .bar {
+            fill: #69b3a2;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background: #333;
+            color: #fff;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        COVID-19 Data Visualization
+    </header>
+
+    <nav>
+        <a href="#barChart">Bar Chart</a>
+        <a href="#map">Map</a>
+        <a href="#seabornChart">Heatmap</a>
+        <a href="#pieChart">Pie Chart</a>
+    </nav>
+
+    <main>
+        <section id="controls">
+            <label for="data-type">Select Data Type:</label>
+            <select id="data-type">
+                <option value="state">Total Deaths by State</option>
+                <option value="age">Total Deaths by Age Group</option>
+                <option value="sex">Total Deaths by Gender</option>
+                <option value="state_age">Deaths by State and Age Group</option>
+                <option value="comparison">Comparing Death Causes</option>
+                <option value="map">Map View</option>
+            </select>
+        </section>
+
+        <section id="barChart">
+            <h2>Bar Chart</h2>
+            <!-- Bar chart will be rendered here -->
+        </section>
+
+        <section id="map" style="display:none;">
+            <h2>Map View</h2>
+            <!-- Map will be rendered here -->
+        </section>
+
+        <section id="seabornChart">
+            <h2>COVID-19 Heatmap</h2>
+            <img src="static/heatmap.png" alt="Heatmap of COVID-19 Deaths and Cases by State">
+        </section>
+
+        <section id="pieChart">
+            <h2>Total Deaths by Age Group</h2>
+            <img src="static/piechart.png" alt="Pie Chart of Total Deaths by Age Group">
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2024 COVID-19 Data Visualization | Data Last Updated: <span id="data-date">August 2024</span>
+    </footer>
+
+    <script>
+        // Set up dimensions for the SVG container
+        const margin = { top: 20, right: 30, bottom: 90, left: 100 };
+        const width = 1000 - margin.left - margin.right;
+        const height = 600 - margin.top - margin.bottom;
+
+        const barSvg = d3.select("#barChart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip");
+
+        // Function to render the bar chart
+        function renderBarChart(data, labelField, valueFields) {
+            barSvg.selectAll("*").remove();
+
+            const color = d3.scaleOrdinal()
+                .domain(valueFields)
+                .range(["#e41a1c", "#377eb8"]);
+
+            const stackedData = d3.stack()
+                .keys(valueFields)
+                (data);
+
+            const x = d3.scaleBand()
+                .domain(data.map(d => d[labelField]))
+                .range([0, width])
+                .padding(0.1);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d3.sum(valueFields.map(key => d[key])))])
+                .nice()
+                .range([height, 0]);
+
+            barSvg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
+
+            barSvg.append("g")
+                .call(d3.axisLeft(y));
+
+            barSvg.selectAll(".layer")
+                .data(stackedData)
+                .enter().append("g")
+                .attr("class", "layer")
+                .attr("fill", d => color(d.key))
+                .selectAll("rect")
+                .data(d => d)
+                .enter().append("rect")
+                .attr("x", d => x(d.data[labelField]))
+                .attr("y", d => y(d[1]))
+                .attr("height", d => y(d[0]) - y(d[1]))
+                .attr("width", x.bandwidth())
+                .on("mouseover", function (event, d) {
+                    const key = d3.select(this.parentNode).datum().key;
+                    tooltip.style("display", "block")
+                        .html(`${labelField}: ${d.data[labelField]}<br>${key}: ${d.data[key]}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 25) + "px");
+                })
+                .on("mousemove", function (event) {
+                    tooltip.style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 25) + "px");
+                })
+                .on("mouseout", function () {
+                    tooltip.style("display", "none");
+                });
+        }
+
+        // Function to render the Leaflet map using GeoJSON
+        function renderMap(data) {
+            d3.select("#map").selectAll("*").remove(); // Clear any existing map
+
+            const map = L.map('map').setView([37.8, -96], 4); // Center of the US
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            // Load the GeoJSON file for US states
+            d3.json("us-states.json").then(function (geoData) {
+                // Join the COVID-19 data with the GeoJSON
+                geoData.features.forEach(function (state) {
+                    const stateName = state.properties.name;
+                    const stateData = data.find(d => d.state === stateName);
+                    console.log(`Matching: ${stateName} -> ${stateData ? stateData.total_deaths : "No match found"}`);
+
+                    if (stateData) {
+                        state.properties.total_deaths = stateData.total_deaths;
+                    } else {
+                        state.properties.total_deaths = 0; // Default to 0 if no data
+                    }
+                });
+
+                // Create a Leaflet layer with the GeoJSON data
+                L.geoJson(geoData, {
+                    style: function (feature) {
+                        return {
+                            fillColor: getColor(feature.properties.total_deaths),
+                            weight: 2,
+                            opacity: 1,
+                            color: 'white',
+                            dashArray: '3',
+                            fillOpacity: 0.7
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(`${feature.properties.name}<br>Total Deaths: ${feature.properties.total_deaths}`);
+                    }
+                }).addTo(map);
+            });
+        }
+
+        // Function to get color based on total deaths
+        function getColor(d) {
+            return d > 100000 ? '#800026' :
+                d > 50000 ? '#BD0026' :
+                    d > 20000 ? '#E31A1C' :
+                        d > 10000 ? '#FC4E2A' :
+                            d > 5000 ? '#FD8D3C' :
+                                d > 2000 ? '#FEB24C' :
+                                    d > 1000 ? '#FED976' :
+                                        '#FFEDA0';
+        }
+
+        // Sample data for bar chart
+        const sampleData = [
+            { state: 'California', deaths_2020: 50000, deaths_2021: 75000 },
+            { state: 'Texas', deaths_2020: 40000, deaths_2021: 60000 },
+            { state: 'Florida', deaths_2020: 30000, deaths_2021: 45000 }
+        ];
+
+        // Initial render with the default data type
+        renderBarChart(sampleData, "state", ["deaths_2020", "deaths_2021"]);
+
+        document.getElementById("data-type").addEventListener("change", function (e) {
+            const selectedType = e.target.value;
+            console.log(`Selected type: ${selectedType}`);
+            
+            if (selectedType === "map") {
+                renderMap(sampleData);
+                document.getElementById("map").style.display = "block";
+                document.getElementById("barChart").style.display = "none";
+            } else {
+                document.getElementById("map").style.display = "none";
+                document.getElementById("barChart").style.display = "block";
+                renderBarChart(sampleData, "state", ["deaths_2020", "deaths_2021"]);
+            }
+        });
+    </script>
+</body>
+
+</html>

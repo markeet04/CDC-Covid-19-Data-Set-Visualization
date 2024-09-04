@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - COVID-19 Data Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #FABC3F;
+        }
+
+        header {
+            background: #333;
+            color: #E85C0D;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bolder;
+        }
+
+        nav {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #C7253E;
+            font-weight: bold;
+        }
+
+        nav a:hover{
+            color: #333;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        section {
+            background: #FCDE70;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #E85C0D;
+        }
+
+        p {
+            color: #333;
+            font-size: 16px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background: #821131;
+            color: #E85C0D;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        About COVID-19 Data Visualization
+    </header>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+    </nav>
+
+    <main>
+        <section>
+            <h2>About This Project</h2>
+            <p>This COVID-19 data visualization project is built using publicly available data from the CDC. The data includes information on total deaths by state, age group, and gender, and compares COVID-19 deaths to other causes. Due to API request limits, the project is currently limited to a subset of states.</p>
+            <p>The visualizations are created using D3.js, a powerful JavaScript library for producing dynamic, interactive data visualizations in web browsers. The project demonstrates how such visualizations can be developed and expanded to include more data, states, or additional metrics as needed.</p>
+            <p>Future improvements could include integrating real-time data updates, adding more states and data points, and further optimizing the visualizations for performance and clarity.</p>
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2024 COVID-19 Data Visualization | Data Last Updated: <span id="data-date">August 2024</span>
+    </footer>
+</body>
+</html>
